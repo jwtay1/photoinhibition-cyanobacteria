@@ -187,8 +187,7 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                         %                         end
                         
                     end
-                    
-                    
+                                        
                 end
                 
             end
