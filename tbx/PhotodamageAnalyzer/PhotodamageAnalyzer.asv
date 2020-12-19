@@ -601,17 +601,15 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                     %Stop the hold
                     subplot(1, 2, 1)
                     hold off
-                    ylim([0 250])
                     ylabel('Sum of cell length (\mum)')
                     xlabel('Hours')
                     
                     subplot(1, 2, 2)
                     hold off
-                    ylim([0 250])
                     ylabel('Sum of cell length (\mum)')
                     xlabel('Hours')
                     
-                case 'meanchlorophyll'
+                case 'meanChlorophyll'
                     
                     for iTrack = 1:numel(leafIDs)
                         
@@ -635,13 +633,13 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                             if strcmpi(obj.Tracks(leafIDs(iTrack)).Type, 'WT')
                                 
                                 subplot(1,2,1)
-                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined)
+                                plot(obj.FileMetadata.Timestamps(frames)/3600, cumsum(combined))
                                 hold on
                                 
                             elseif strcmpi(obj.Tracks(leafIDs(iTrack)).Type, 'cpc')
                                 
                                 subplot(1,2,2)
-                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined)
+                                plot(obj.FileMetadata.Timestamps(frames)/3600, cumsum(combined))
                                 hold on
                                 
                             end
@@ -655,71 +653,16 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                     %Stop the hold
                     subplot(1, 2, 1)
                     hold off
-                    ylim([0 14000])
-                    ylabel('Chlorophyll Intensity (\mum)')
+                    ylabel('Chloroph (\mum)')
                     xlabel('Hours')
                     
                     subplot(1, 2, 2)
                     hold off
-                    ylim([0 3500])
-                    ylabel('Chlorophyll Intensity  (\mum)')
+                    ylabel('Sum of cell length (\mum)')
                     xlabel('Hours')
                     
                     
-                case 'meanphycobilisome'
-                    
-                    for iTrack = 1:numel(leafIDs)
-                        
-                        %Get list of IDs
-                        IDs = traverse(obj, leafIDs(iTrack), 'backwards');
-                        
-                        if numel(IDs) >= 2
-                            
-                            %Concatenate
-                            combined = [];
-                            frames = [];
-                            for ii = 1:numel(IDs)
-                                
-                                rfp = [obj.Tracks(IDs(ii)).Data.MeanRFP{:}];
-                                
-                                combined = [combined rfp];
-                                frames = [frames obj.Tracks(IDs(ii)).Frames];
-                                
-                            end
-                            
-                            if strcmpi(obj.Tracks(leafIDs(iTrack)).Type, 'WT')
-                                
-                                subplot(1,2,1)
-                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined)
-                                hold on
-                                
-                            elseif strcmpi(obj.Tracks(leafIDs(iTrack)).Type, 'cpc')
-                                
-                                subplot(1,2,2)
-                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined)
-                                hold on
-                                
-                            end
-                            
-                            
-                        end
-                        
-                        
-                    end
-                    
-                    %Stop the hold
-                    subplot(1, 2, 1)
-                    hold off
-                    ylim([0 4000])
-                    ylabel('Phycobilisome Intensity (\mum)')
-                    xlabel('Hours')
-                    
-                    subplot(1, 2, 2)
-                    hold off
-                    ylim([0 1500])
-                    ylabel('Phycobilisome Intensity  (\mum)')
-                    xlabel('Hours')
-                    
+                case 'meanPhycobilisome'
             
             
             end
