@@ -5,10 +5,15 @@ clc
 S1 = PhotodamageAnalyzer;
 S1 = importdata(S1, 'D:\Projects\2020Feb Photodamage\data\MergeProcess20200429\Reprocessed\ChannelRed,Cy5,RFP_Seq0000_series1_merged.mat');
 S1.iXY = 1;
+% 
+% S17 = PhotodamageAnalyzer;
+% S17 = importdata(S17, 'D:\Projects\2020Feb Photodamage\data\MergeProcess20200429\Reprocessed\ChannelRed,Cy5,RFP_Seq0000_series17_merged.mat');
+% S17.iXY = 17;
 
 S17 = PhotodamageAnalyzer;
-S17 = importdata(S17, 'D:\Projects\2020Feb Photodamage\data\MergeProcess20200429\Reprocessed\ChannelRed,Cy5,RFP_Seq0000_series17_merged.mat');
+S17 = importdata(S17, 'D:\Projects\2020Feb Photodamage\data\MergeProcess20200429\Reproccessed_S17_20201221\ChannelRed,Cy5,RFP_Seq0000_series17_merged.mat');
 S17.iXY = 17;
+
 
 %%
 S20 = PhotodamageAnalyzer;

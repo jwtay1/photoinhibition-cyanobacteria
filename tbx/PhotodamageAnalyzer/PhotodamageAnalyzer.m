@@ -65,6 +65,7 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                     obj.Tracks(iT).Classification = 'tooshort';
                     
                 else
+                    
                     %Determine which are tracks that are just at the end of
                     %the movie vs tracks that are actually dead
                     yy = smooth([obj.Tracks(iT).Data.MajorAxisLength{:}], 3);
@@ -98,26 +99,9 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                         data = data - 0.6;
                         changept = findchangepts(yy, 'Statistic', 'linear');
                         
-%                         figure;
-%                         plot(tt, yy .* obj.FileMetadata.PhysicalPxSize(1), ...
-%                             tt(changept), yy(changept) * obj.FileMetadata.PhysicalPxSize(1), 'rx');
-%                         xlabel('Hours')
-%                         ylabel('Cell length (\mum)')
-%                         keyboard
-                                            figure(98)
-
+                        figure(98)
                         
-                        %                         if any(obj.Tracks(iT).Frames == 10)
-                        
-%                         if obj.Tracks(iT).Frames(1) > 10
-%                             obj.Tracks(iT).Classification = 'alive';
-%                             
-%                             subplot(1, 2, 2)
-%                             plot(data, 'color', [0.6, 0, 0.6, tp]);
-%                             hold on
-%                             continue;
-%                         end
-                        
+            
                         if (obj.Tracks(iT).Data.MajorAxisLength{end} - obj.Tracks(iT).Data.MajorAxisLength{changept}) < 5
                             
                             obj.Tracks(iT).Classification = 'dead';
@@ -136,58 +120,8 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                             
                         end
                         
-                        %                             figure(99)
-                        %                             plot(tt, yy)
-                        %                             hold on
-                        %                             plot(tt(changept), yy(changept), 'x')
-                        %                             hold off
-                        %                             keyboard
-                        %
-                        %                         else
-                        %                             obj.Tracks(iT).Classification = 'alive';
-                        %
-                        %                             subplot(1, 2, 2)
-                        %                             plot(data, 'color', [0.6, 0, 0.6, tp]);
-                        %                             hold on
-                        %
-                        %                         end
-                        
-                        %                         figure(98)
-                        %                         if nnz(ss <= obj.maxstd_cpc_dead) > 5
-                        %                             obj.Tracks(iT).Classification = 'dead';
-                        %
-                        %                             subplot(1, 2, 1)
-                        %                             plot(data, 'color', [0.6, 0, 0.6, tp]);
-                        %                             hold on
-                        %
-                        % %                             %Plot plateaus
-                        % %                             figure(99);
-                        % %                             yyaxis left
-                        % %                             plot(tt, yy);
-                        % %                             ylabel('Cell length (pixels)')
-                        % %
-                        % %                             yyaxis right
-                        % %                             plot(tt, ss);
-                        % %                             hold on
-                        % %                             tt = tt(ss <= obj.maxstd_cpc_dead);
-                        % %                             plot(tt, ss(ss <= obj.maxstd_cpc_dead), 'm')
-                        % %                             hold off
-                        % %                             ylabel('Standard deviation')
-                        % %                             xlabel('Hours')
-                        % %                             keyboard
-                        % %
-                        %
-                        %                         else
-                        %                             obj.Tracks(iT).Classification = 'alive';
-                        %
-                        %                             subplot(1, 2, 2)
-                        %                             plot(data, 'color', [0.6, 0, 0.6, tp]);
-                        %                             hold on
-                        %
-                        %                         end
-                        
                     end
-                                        
+                    
                 end
                 
             end
@@ -196,10 +130,23 @@ classdef PhotodamageAnalyzer < DataAnalyzer
         
         function showFrame(obj, frame, channel, varargin)
             
-            %Open a reader
-            nd2 = ND2reader(obj.FileMetadata.Filename);
-            I = getImage(nd2, 1, frame, obj.iXY);
-            I = I(:, :, channel);
+            filenames = strsplit(obj.FileMetadata.Filename, '; ');
+            nd2_pre = ND2reader(filenames{1});
+            nd2_post = ND2reader(filenames{2});
+            
+            if nd2_pre.sizeT >= frame
+                
+                %Open a reader
+                %nd2 = ND2reader(obj.FileMetadata.Filename);
+                I = getImage(nd2_pre, 1, frame, obj.iXY);
+                I = I(:, :, channel);
+                
+            else
+                
+                I = getImage(nd2_post, 1, frame - nd2_pre.sizeT + 1, obj.iXY);
+                I = I(:, :, channel);
+                
+            end
             
             %Normalize
             I = double(I);
@@ -566,33 +513,53 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                                 cellLength = [obj.Tracks(IDs(ii)).Data.MajorAxisLength{:}];
                                 dL = [0 diff(cellLength)];
                                 
-%                                 if isempty(combined)
-%                                     cellLength = [obj.Tracks(IDs(ii)).Data.MajorAxisLength{:}];
-%                                     dL = diff(cellLength);
-%                                 else
-%                                     cellLength = [obj.Tracks(IDs(ii)).Data.MajorAxisLength{:}] + combined(end);
-%                                 end
-%                                 
+                                %                                 if isempty(combined)
+                                %                                     cellLength = [obj.Tracks(IDs(ii)).Data.MajorAxisLength{:}];
+                                %                                     dL = diff(cellLength);
+                                %                                 else
+                                %                                     cellLength = [obj.Tracks(IDs(ii)).Data.MajorAxisLength{:}] + combined(end);
+                                %                                 end
+                                %
                                 combined = [combined dL];
                                 frames = [frames obj.Tracks(IDs(ii)).Frames];
                                 
                             end
-                        
+                            
+                            switch lower(obj.Tracks(leafIDs(iTrack)).Classification)
+                                
+                                case 'alive'
+                                    
+                                    color = 'r';
+                                    
+                                case 'dead'
+                                    color = 'b';
+                                    
+                                case 'tooshort'
+                                    color = 'r';
+                                    
+                                case 'excluded'
+                                    color = 'y';
+                                    
+                            end
+                            
+                            
                             if strcmpi(obj.Tracks(leafIDs(iTrack)).Type, 'WT')
-                                 
+                                
                                 subplot(1,2,1)
-                                plot(obj.FileMetadata.Timestamps(frames)/3600, cumsum(combined))
+                                plot(obj.FileMetadata.Timestamps(frames)/3600, cumsum(combined) .* obj.FileMetadata.PhysicalPxSize(1), ...
+                                    'Color', color)
                                 hold on
                                 
                             elseif strcmpi(obj.Tracks(leafIDs(iTrack)).Type, 'cpc')
                                 
                                 subplot(1,2,2)
-                                plot(obj.FileMetadata.Timestamps(frames)/3600, cumsum(combined))
+                                plot(obj.FileMetadata.Timestamps(frames)/3600, cumsum(combined) .* obj.FileMetadata.PhysicalPxSize(1), ...
+                                    'Color', color)
                                 hold on
                                 
                             end
                             
-                           
+                            
                         end
                         
                         
@@ -601,13 +568,13 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                     %Stop the hold
                     subplot(1, 2, 1)
                     hold off
-                    ylim([0 250])
+                    ylim([0 20])
                     ylabel('Sum of cell length (\mum)')
                     xlabel('Hours')
                     
                     subplot(1, 2, 2)
                     hold off
-                    ylim([0 250])
+                    ylim([0 20])
                     ylabel('Sum of cell length (\mum)')
                     xlabel('Hours')
                     
@@ -631,17 +598,37 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                                 frames = [frames obj.Tracks(IDs(ii)).Frames];
                                 
                             end
+                            switch lower(obj.Tracks(leafIDs(iTrack)).Classification)
+                                
+                                case 'alive'
+                                    
+                                    color = 'r';
+                                    
+                                case 'dead'
+                                    color = 'b';
+                                    
+                                case 'tooshort'
+                                    color = 'r';
+                                    
+                                case 'excluded'
+                                    color = 'y';
+                                    
+                            end
+                            
+                            
                             
                             if strcmpi(obj.Tracks(leafIDs(iTrack)).Type, 'WT')
                                 
                                 subplot(1,2,1)
-                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined)
+                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined, ...
+                                    'Color', color)
                                 hold on
                                 
                             elseif strcmpi(obj.Tracks(leafIDs(iTrack)).Type, 'cpc')
                                 
                                 subplot(1,2,2)
-                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined)
+                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined, ...
+                                    'Color', color)
                                 hold on
                                 
                             end
@@ -687,16 +674,36 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                                 
                             end
                             
+                            switch lower(obj.Tracks(leafIDs(iTrack)).Classification)
+                                
+                                case 'alive'
+                                    
+                                    color = 'r';
+                                    
+                                case 'dead'
+                                    color = 'b';
+                                    
+                                case 'tooshort'
+                                    color = 'r';
+                                    
+                                case 'excluded'
+                                    color = 'y';
+                                    
+                            end
+                            
+                            
                             if strcmpi(obj.Tracks(leafIDs(iTrack)).Type, 'WT')
                                 
                                 subplot(1,2,1)
-                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined)
+                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined, ...
+                                    'Color', color)
                                 hold on
                                 
                             elseif strcmpi(obj.Tracks(leafIDs(iTrack)).Type, 'cpc')
                                 
                                 subplot(1,2,2)
-                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined)
+                                plot(obj.FileMetadata.Timestamps(frames)/3600, combined, ...
+                                    'Color', color)
                                 hold on
                                 
                             end
@@ -720,10 +727,10 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                     ylabel('Phycobilisome Intensity  (\mum)')
                     xlabel('Hours')
                     
-            
-            
+                    
+                    
             end
-                       
+            
         end
         
     end

@@ -30,5 +30,5 @@ hold on
 histogram(rfp_cpc, 'BinEdges', binEdges);
 hold off
 legend('WT', '\Deltacpc')
-xlabel('Mean RFP Intensity/cell')
+xlabel('Mean phycobilisome intensity')
 ylabel('Number of cells')
