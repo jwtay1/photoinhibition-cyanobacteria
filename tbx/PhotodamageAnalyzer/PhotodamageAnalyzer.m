@@ -7,6 +7,9 @@ classdef PhotodamageAnalyzer < DataAnalyzer
         
         maxstd_cpc_dead = 1.5;
         maxstd_wt_dead = 1.5;
+        
+        Lineages
+        
     end
     
     properties (SetAccess = private, Hidden)
@@ -125,6 +128,8 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                 end
                 
             end
+            
+            obj = getLineages(obj);
             
         end
         
@@ -729,6 +734,31 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                     
                     
                     
+            end
+            
+        end
+        
+        function obj = getLineages(obj)
+            %GETLINEAGES
+            %
+            %  GETLINEAGES(OBJ) populates the Lineages property with
+            %  information of the lineages of each terminal (leaf) cell.
+            %
+            %  OBJ.Lineages.IDs - List of IDs
+            %  OBJ.Lineages.Classification - Growing/Dead/Tooshort
+            %  OBJ.Lineages.Type - WT/cpc
+            
+            
+            %Find leaf nodes (i.e. daughterIdx = NaN)
+            leafIDs = find(cellfun(@(x) any(isnan(x)), {obj.Tracks.DaughterID}));
+            
+            for iLeaves = 1:numel(leafIDs)
+                
+                %Get list of IDs
+                obj.Lineages(iLeaves).IDs = traverse(obj, leafIDs(iLeaves), 'backwards');
+                obj.Lineages(iLeaves).Classification = obj.Tracks(leafIDs(iLeaves)).Classification;
+                obj.Lineages(iLeaves).Type = obj.Tracks(leafIDs(iLeaves)).Type;
+                
             end
             
         end
