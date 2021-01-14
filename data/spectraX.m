@@ -26,4 +26,6 @@ Power = [3	0.694
 90	20.6
 100	22.2]
 
-plot(Power(:, 1), Power(:, 2))
+plot(Power(:, 1), (Power(:, 2)*1e-3) /(2044*2048*(0.065e-6)^2))
+xlabel('SpectraX setting (%)')
+ylabel('Intensity (W/m^2)')

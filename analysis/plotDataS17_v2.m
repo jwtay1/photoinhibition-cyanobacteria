@@ -1,5 +1,10 @@
 function plotDataS17(obj)
 %PLOTDATA
+%Updated: 2021-01-14
+%Adjusted metric for classifying cpc lineages as alive or dead
+%Checked the dead traces and found that only 1 was real - the others were
+%due to errors. Removed erroneous traces.
+
 
 %Find leaf nodes (i.e. daughterIdx = NaN)
 leafIDs = find(cellfun(@(x) any(isnan(x)), {obj.Tracks.DaughterID}));
@@ -55,21 +60,22 @@ for iTrack = 1:numel(leafIDs)
     lineageData(newIdx).Productivity = cumsum(combinedLength) .* obj.FileMetadata.PhysicalPxSize(1);
     
     lineageData(newIdx).MeanChl = combinedCy5;
-    lineageData(newIdx).MeanChlNorm = lineageData(newIdx).MeanChl - lineageData(newIdx).MeanChl(1);
+    lineageData(newIdx).MeanChlNorm = lineageData(newIdx).MeanChl / mean(lineageData(newIdx).MeanChl(1));
     
     lineageData(newIdx).MeanPcb = combinedRFP;
-    lineageData(newIdx).MeanPcbNorm = lineageData(newIdx).MeanPcb - lineageData(newIdx).MeanPcb(1);
+    lineageData(newIdx).MeanPcbNorm = lineageData(newIdx).MeanPcb / mean(lineageData(newIdx).MeanPcb(1));
     
-    %Filter out invalid tracks - tracks that did not track long enough?
-    if numel(lineageData(newIdx).Frames) < 61
-        continue;        
-    end
+%     %Filter out invalid tracks - tracks that did not track long enough?
+%     if numel(lineageData(newIdx).Frames) < 61
+%         continue;        
+%     end
     
     
     %Classify based on Cy5 intensity
     if strcmpi(lineageData(newIdx).Type, 'wt')
         
-        if max(lineageData(newIdx).MeanChlNorm) < 2.4
+        %if max(lineageData(newIdx).MeanChl) < 5000 && max(lineageData(newIdx).MeanPcb) < 1800
+        if max(lineageData(newIdx).MeanChlNorm) < 2.7 && max(lineageData(newIdx).MeanPcbNorm) < 3
         %if lineageData(newIdx).Productivity(end) > 8.5
             lineageData(newIdx).Classification = 'Growing';
             
@@ -117,9 +123,8 @@ for iTrack = 1:numel(leafIDs)
         
     elseif strcmpi(lineageData(newIdx).Type, 'cpc')
         
-        %if max(lineageData(newIdx).MeanChl) > 1600
+        if max(lineageData(newIdx).MeanChl) < 1600
         %if lineageData(newIdx).Productivity(end) > 1.5
-        if max(lineageData(newIdx).MeanChl) < 1.8
             
             lineageData(newIdx).Classification = 'Growing';
             disp(lineageData(newIdx).IDs)
@@ -133,17 +138,22 @@ for iTrack = 1:numel(leafIDs)
             
             figure(2)
             subplot(1,2,2)
-            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanChlNorm, ...
+            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanChl, ...
                 'Color', 'red')
             hold on
             
             figure(3)
             subplot(1,2,2)
-            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanPcbNorm, ...
+            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanPcb, ...
                 'Color', 'red')
             hold on
 %             keyboard
         else
+            
+            %Skip the three that I know are wrong
+            if any(ismember(lineageData(newIdx).IDs, 5))
+                continue
+            end
             
             lineageData(newIdx).Classification = 'Stopped';
             
@@ -155,13 +165,13 @@ for iTrack = 1:numel(leafIDs)
             
             figure(2)
             subplot(1,2,2)
-            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanChlNorm, ...
+            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanChl, ...
                 'Color', 'blue')
             hold on
             
             figure(3)
             subplot(1,2,2)
-            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanPcbNorm, ...
+            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanPcb, ...
                 'Color', 'blue')
             hold on
             
