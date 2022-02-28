@@ -316,6 +316,7 @@ classdef PhotodamageAnalyzer < DataAnalyzer
             
             cm = magma(65535);
             storeImg = getImages(obj, ids, varargin{:});
+            
             %Save images
             outputImg = zeros(size(storeImg(:, :, 1)));
             for ii = 1:size(storeImg, 3)
@@ -760,6 +761,77 @@ classdef PhotodamageAnalyzer < DataAnalyzer
                 obj.Lineages(iLeaves).Type = obj.Tracks(leafIDs(iLeaves)).Type;
                 
             end
+            
+        end
+        
+        function exportSegmentation(obj, frame, outputDir, varargin)
+            
+            %Create ND2 readers for the files. Assumption here is that
+            %there are two files, one containing pre-irradiation images and
+            %the other containing post-irradiation images.
+            filenames = strsplit(obj.FileMetadata.Filename, '; ');
+            nd2_pre = ND2reader(filenames{1});
+            nd2_post = ND2reader(filenames{2});
+            
+            %Identify the correct image to use
+            if frame > nd2_pre.sizeT
+                img = getImage(nd2_post, 1, frame - nd2_pre.sizeT);
+            else
+                img = getImage(nd2_pre, 1, frame);
+            end
+                       
+            %Re-generate the mask
+            maskCPC = false(nd2_pre.height, nd2_pre.width);
+            maskWT = false(nd2_pre.height, nd2_pre.width);
+            
+            %Find tracks which exist in selected frame
+            for iTrack = 1:numel(obj)
+                if ismember(frame, obj.Tracks(iTrack).Frames)
+                    if strcmpi(obj.Tracks(iTrack).Type, 'cpc')
+                        maskCPC(obj.Tracks(iTrack).Data.PixelIdxList{obj.Tracks(iTrack).Frames == frame}) = true;
+                    else
+                        maskWT(obj.Tracks(iTrack).Data.PixelIdxList{obj.Tracks(iTrack).Frames == frame}) = true;
+                    end
+                end
+            end
+            
+            %Generate output images
+            maskCPC = imdilate(bwperim(maskCPC), ones(2));
+            maskWT = imdilate(bwperim(maskWT), ones(2));
+            
+            cm = plasma(65536);
+            cm(1,:) = 0;
+            
+            bf = img(:, :, 1);
+            bf = double(bf);
+            bf = (bf - min(bf(:)))/(max(bf(:)) - min(bf(:)));            
+            bf = showoverlay(bf, bwperim(maskCPC), 'color', [1 1 0]);
+            bf = showoverlay(bf, bwperim(maskWT), 'color', [0 1 1]);
+            
+            imwrite(fullfile(outputDir, 'brightfield.png'), bf);
+            
+            chl = img(:, :, 2);
+            chl = double(chl);
+            chl = (chl - min(chl(:)))/(max(chl(:)) - min(chl(:)));
+            chl = chl * 65535;
+            
+            chlRGB = zeros(size(chl, 3));
+            for iC = 1:3
+                currCM = cm(:, iC);
+                chlRGB(:, :, iC) = currCM(chl + 1);
+            end
+            
+            chlRGB = showoverlay(chlRGB, bwperim(maskCPC), 'color', [1 1 0]);
+            chlRGB = showoverlay(chlRGB, bwperim(maskWT), 'color', [0 1 1]);
+            
+            imwrite(fullfile(outputDir, 'chl.png'), chlRGB);
+            
+            pcb = img(:, :, 4);
+            pcb = showoverlay(pcb, bwperim(maskCPC), 'color', [1 1 0]);   
+            pcb = showoverlay(pcb, bwperim(maskWT), 'color', [0 1 1]);
+            
+            imwrite(fullfile(outputDir, 'pcb.png'), pcb);
+            
             
         end
         

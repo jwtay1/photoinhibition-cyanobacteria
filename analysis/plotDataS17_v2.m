@@ -1,4 +1,4 @@
-function plotDataS17(obj)
+function plotDataS17_v2(obj)
 %PLOTDATA
 %Updated: 2021-01-14
 %Adjusted metric for classifying cpc lineages as alive or dead
@@ -66,16 +66,25 @@ for iTrack = 1:numel(leafIDs)
     lineageData(newIdx).MeanPcbNorm = lineageData(newIdx).MeanPcb / mean(lineageData(newIdx).MeanPcb(1));
     
 %     %Filter out invalid tracks - tracks that did not track long enough?
-%     if numel(lineageData(newIdx).Frames) < 61
+%     if numel(lineageData(newIdx).Frames) < 23
 %         continue;        
 %     end
-    
+%     
     
     %Classify based on Cy5 intensity
     if strcmpi(lineageData(newIdx).Type, 'wt')
         
+        if numel(lineageData(newIdx).Frames) < 50
+           continue 
+        end
+        
         %if max(lineageData(newIdx).MeanChl) < 5000 && max(lineageData(newIdx).MeanPcb) < 1800
-        if max(lineageData(newIdx).MeanChlNorm) < 2.7 && max(lineageData(newIdx).MeanPcbNorm) < 3
+        %if max(lineageData(newIdx).MeanChlNorm) < 2.7 && max(lineageData(newIdx).MeanPcbNorm) < 3
+        
+        %UV-pulse occured at 36000s which is at Frame 19/20.
+        if mean(lineageData(newIdx).Productivity(end-7:end)) > (1.5 * lineageData(newIdx).Productivity(20))
+%         keyboard
+            
         %if lineageData(newIdx).Productivity(end) > 8.5
             lineageData(newIdx).Classification = 'Growing';
             
@@ -87,13 +96,16 @@ for iTrack = 1:numel(leafIDs)
             
             figure(2)
             subplot(1,2,1)
-            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanChlNorm, ...
+            %plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanChlNorm, ...
+            %    'Color', 'red')
+            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanChl, ...
                 'Color', 'red')
+            
             hold on
             
             figure(3)
             subplot(1,2,1)
-            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanPcbNorm, ...
+            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanPcb, ...
                 'Color', 'red')
             hold on
 %             keyboard
@@ -109,13 +121,13 @@ for iTrack = 1:numel(leafIDs)
             
             figure(2)
             subplot(1,2,1)
-            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanChlNorm, ...
+            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanChl, ...
                 'Color', 'blue')
             hold on
             
             figure(3)
             subplot(1,2,1)
-            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanPcbNorm, ...
+            plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanPcb, ...
                 'Color', 'blue')
             hold on
             
@@ -128,8 +140,13 @@ for iTrack = 1:numel(leafIDs)
             
             lineageData(newIdx).Classification = 'Growing';
             disp(lineageData(newIdx).IDs)
-
             
+            %Filter out plots that have sharp changes in length
+            %(segmentation issue)
+            if any(abs(diff(lineageData(newIdx).Productivity)) > 2)
+                continue
+            end
+                        
             figure(1)
             subplot(1,2,2)
             plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).Productivity, ...
@@ -147,6 +164,8 @@ for iTrack = 1:numel(leafIDs)
             plot(obj.FileMetadata.Timestamps(frames)/3600, lineageData(newIdx).MeanPcb, ...
                 'Color', 'red')
             hold on
+            
+            %pause
 %             keyboard
         else
             
@@ -199,7 +218,7 @@ subplot(1, 2, 1)
 hold off
 subplot(1, 2, 2)
 hold off
-
+ylim([200 900])
 
 % 
 % switch lower(dataType)
