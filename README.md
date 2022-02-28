@@ -1,7 +1,6 @@
-# Photodamage in Cyanobacteria
+# Photoinhibition in cyanobacteria
 
-This repository contains image and data analysis code for the photodamage 
-project.
+This repository contains image and data analysis code for an upcoming paper, currently titled "Fluorescence microscopy reveals heterogeneity in cyanobacterial survival of photodamage" by Jian Wei Tay and Jeffrey Cameron, University of Colorado Boulder.
 
 ## Features
 
@@ -10,24 +9,8 @@ project.
 * Identification of cell fate (alive or dead)
 * Data analysis
 
-## Installation and Usage
+## Running the code
 
-The PhotodamageAnalyzer object is a subclass of TrackArray. Hence, it 
-requires the Linear Assignment Toolbox.
+To execute the code, download the repository and unzip the contents to the MATLAB path.
 
-For more details, consult the Wiki
-
-### Importing tracked data
-
-1. Create a new `PhotodamageAnalyzer` object
-   
-   ```matlab
-   P = PhotodamageAnalyzer
-   ```
-   
-2. Import data (don't specify a file path to open a dialog box)
-   
-   ```matlab
-   P = importdata(P, 'path/to/data.mat');
-   ```
-
+The code was developed and tested on MATLAB R2021a.
