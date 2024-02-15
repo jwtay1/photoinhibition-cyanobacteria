@@ -834,6 +834,69 @@ classdef PhotodamageAnalyzer < DataAnalyzer
             
             
         end
+
+        function exportMasks(obj, outputDir, varargin)
+
+            %Create ND2 readers for the files. Assumption here is that
+            %there are two files, one containing pre-irradiation images and
+            %the other containing post-irradiation images.
+            filenames = strsplit(obj.FileMetadata.Filename, '; ');
+            nd2_pre = ND2reader(filenames{1});
+            nd2_post = ND2reader(filenames{2});
+
+            [~, outputFN] = fileparts(filenames{1});
+            outputFN = [outputFN , '_s', int2str(obj.iXY)]
+
+            for frame = 1:(nd2_pre.sizeT + nd2_post.sizeT)
+
+                %Identify the correct image to use
+                if frame > nd2_pre.sizeT
+                    img = getImage(nd2_post, 1, frame - nd2_pre.sizeT);
+                else
+                    img = getImage(nd2_pre, 1, frame);
+                end
+
+                %Re-generate the mask
+                maskCPC = false(nd2_pre.height, nd2_pre.width);
+                maskWT = false(nd2_pre.height, nd2_pre.width);
+
+                %Find tracks which exist in selected frame
+                for iTrack = 1:numel(obj)
+                    if ismember(frame, obj.Tracks(iTrack).Frames)
+                        if strcmpi(obj.Tracks(iTrack).Type, 'cpc')
+                            maskCPC(obj.Tracks(iTrack).Data.PixelIdxList{obj.Tracks(iTrack).Frames == frame}) = true;
+                        else
+                            maskWT(obj.Tracks(iTrack).Data.PixelIdxList{obj.Tracks(iTrack).Frames == frame}) = true;
+                        end
+                    end
+                end
+
+                if frame == 1
+
+                    %Write image to file
+                    imwrite(img, fullfile(outputDir, [outputFN, '.tif']), 'Compression', 'none');
+
+                    %Write WT mask to file
+                    imwrite(maskWT, fullfile(outputDir, [outputFN, '_WT.tif']), 'Compression', 'none');
+                    imwrite(maskCPC, fullfile(outputDir, [outputFN, '_CPC.tif']), 'Compression', 'none');
+
+                else
+
+                    %Write image to file
+                    imwrite(img, fullfile(outputDir, [outputFN, '.tif']), 'Compression', 'none', ...
+                        'writeMode', 'append');
+
+                    %Write WT mask to file
+                    imwrite(maskWT, fullfile(outputDir, [outputFN, '_WT.tif']), 'Compression', 'none', ...
+                        'writeMode', 'append');
+                    imwrite(maskCPC, fullfile(outputDir, [outputFN, '_CPC.tif']), 'Compression', 'none', ...
+                        'writeMode', 'append');
+                end
+
+            end
+
+
+        end
         
     end
     

@@ -1,0 +1,3 @@
+clearvars
+clc
+
